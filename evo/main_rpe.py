@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with evo.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import copy
 import logging
 
 import numpy as np
@@ -49,8 +50,22 @@ def rpe(
     change_unit: metrics.Unit | None = None,
     project_to_plane: Plane | None = None,
 ) -> Result:
+    """
+    Pure functional API for the RPE metric: takes trajectory data structures
+    as input and returns a deterministic Result object.
+    The input trajectories are not modified - all alignment, projection and
+    reduction steps are applied to internal copies. The processed trajectories
+    are attached to the returned Result for consumers (plotting, export...).
+
+    :param support_loop: deprecated, no effect - the function is always
+                         side-effect free now, also when called repeatedly
+    """
     if align and align_origin:
         raise ValueError("align and align_origin can't be used simultaneously")
+
+    # Work on copies to keep this function free of side effects.
+    traj_ref = copy.deepcopy(traj_ref)
+    traj_est = copy.deepcopy(traj_est)
 
     ref_name = traj_ref.name or "reference"
     est_name = traj_est.name or "estimate"
@@ -115,12 +130,6 @@ def rpe(
     logger.info(rpe_result.pretty_str())
 
     # Restrict trajectories to delta ids for further processing steps.
-    if support_loop:
-        # Avoid overwriting if called repeatedly e.g. in Jupyter notebook.
-        import copy
-
-        traj_ref = copy.deepcopy(traj_ref)
-        traj_est = copy.deepcopy(traj_est)
     # Note: the pose at index 0 is added for plotting purposes, although it has
     # no RPE value assigned to it since it has no previous pose.
     # (for each pair (i, j), the 'delta_ids' represent only j)

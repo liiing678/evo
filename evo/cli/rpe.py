@@ -99,6 +99,11 @@ def run(args: argparse.Namespace) -> None:
         project_to_plane=plane,
     )
 
+    # The metric function is pure and doesn't modify its input trajectories.
+    # Use the processed trajectories stored in the result for plotting etc.
+    traj_ref = result.trajectories[result.info["ref_name"]]
+    traj_est = result.trajectories[result.info["est_name"]]
+
     if args.rerun:
         common.send_result_to_rerun(
             "evo_rpe",
